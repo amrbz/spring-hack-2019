@@ -1,0 +1,60 @@
+version: "2"
+
+services:
+  nginx:
+    build: ./nginx
+    image: spring-hack/spring-hack-nginx
+    container_name: spring-hack-nginx
+    ports:
+      - 3500:8081
+      - 3003:3003
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - ibe
+      - api
+      - web
+    restart: unless-stopped
+
+  ibe:
+    build: ./ibejs
+    image: spring-hack/spring-hack-ibe
+    container_name: spring-hack-ibe
+    volumes:
+      - ./ibejs:/opt
+    restart: unless-stopped
+    command: bash -c "npm install -y && node server.js"
+
+  api:
+    build: ./server
+    image: spring-hack/spring-hack-api
+    container_name: spring-hack-api
+    volumes:
+      - ./server:/opt
+      - ./server/config.ini:/opt/config.ini
+    networks:
+      - postgres_default
+      - default
+    external_links:
+      - postgres:postgres
+    command: bash -c "python3.7 server.py"
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    image: spring-hack/spring-hack-web
+    container_name: spring-hack-web
+    environment:
+      WS_PORT: 3003
+    volumes:
+      - ./web:/opt
+    command: bash -c "npm install -y && npm run dev"
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+  postgres_default:
+    external: true

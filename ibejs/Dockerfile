@@ -1,0 +1,5 @@
+FROM node
+
+WORKDIR /opt
+
+EXPOSE 8081
