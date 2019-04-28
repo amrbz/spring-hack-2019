@@ -108,10 +108,12 @@ class Sber(HTTPMethodView):
 
     def put(self, request):
     
-        if 'id' not in request.form:
-            return bad_request('ID number is not provided')
+        if 'publicKey' not in request.form:
+            return bad_request('Public Key is not provided')
 
-        reset_id = request.form['id'][0]
+        public_key = request.form['publicKey'][0]
+
+        print('publicKey', public_key)
 
         try:
             conn = psycopg2.connect(**dsn)
@@ -119,9 +121,9 @@ class Sber(HTTPMethodView):
                 with conn.cursor() as cur:
                     cur.execute("""
                         UPDATE resets SET verified=1
-                        WHERE id='{id}'
+                        WHERE public_key='{public_key}'
                     """.format(
-                            id=reset_id,
+                            public_key=public_key.replace('\n', ''),
                         ))
 
                     conn.commit()
@@ -130,7 +132,7 @@ class Sber(HTTPMethodView):
             return bad_request(error)
 
         data = {
-            'id': reset_id,
+            'publicKey': public_key,
             'verified': True
         }
 
@@ -186,11 +188,16 @@ class SberCypher(HTTPMethodView):
         if 'cypherText' not in request.form:
             return bad_request('Cypher text is not provided')
 
-        if 'id' not in request.form:
-            return bad_request('Reset ID key is not provided')
+        if 'publicKey' not in request.form:
+            return bad_request('publicKey text is not provided')
+        
+
+        # if 'id' not in request.form:
+        #     return bad_request('Reset ID key is not provided')
 
         cypher_text = request.form['cypherText'][0]
-        reset_id = request.form['id'][0]
+        # reset_id = request.form['id'][0]
+        public_key = request.form['publicKey'][0]
 
         try:
             conn = psycopg2.connect(**dsn)
@@ -200,9 +207,9 @@ class SberCypher(HTTPMethodView):
                         SELECT COUNT(*)
                         FROM resets
                         WHERE verified=1
-                        AND id='{reset_id}'
+                        AND public_key='{public_key}'
                     """.format(
-                        reset_id=reset_id
+                        public_key=public_key.replace('\n', '')
                     ))
                     count = cur.fetchone()[0]
                     if count == 0:
@@ -210,9 +217,9 @@ class SberCypher(HTTPMethodView):
 
                     cur.execute("""
                         UPDATE resets SET cypher_text='{cypher_text}'
-                        WHERE id='{reset_id}'
+                        WHERE public_key='{public_key}'
                     """.format(
-                            reset_id=reset_id,
+                            public_key=public_key.replace('\n', ''),
                             cypher_text=cypher_text.replace('\n', '')
                         ))
 
@@ -223,7 +230,7 @@ class SberCypher(HTTPMethodView):
 
         data = {
             'cypherText': cypher_text,
-            'id': reset_id
+            'id': public_key
         }
 
         return json(data, status=200)

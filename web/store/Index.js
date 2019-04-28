@@ -36,7 +36,8 @@ class AliceStore {
         this.itemToConfirm = item;
         const formConfig = {};
         const formData = new FormData();
-        formData.append('id', item.id);
+        // formData.append('id', item.id);
+        formData.append('publicKey', item.publicKey);
 
         this.sendConfirmStatus = 'fetching';
         axios
